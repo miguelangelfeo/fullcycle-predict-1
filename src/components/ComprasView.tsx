@@ -3,11 +3,15 @@ import { ShoppingCart, AlertTriangle, Package, Download } from "lucide-react";
 import { inventario, pedidoSugerido } from "@/lib/mock-data";
 import { StatCard } from "./StatCard";
 import { Button } from "./ui/button";
+import { DocumentUploader } from "./DocumentUploader";
+import { useAuth } from "@/lib/auth-context";
 import { useState } from "react";
 
 export function ComprasView() {
+  const { user } = useAuth();
   const criticos = inventario.filter((i) => i.estado === "critico").length;
   const [descargando, setDescargando] = useState(false);
+  const canUpload = user && ["gerente", "compras"].includes(user.role);
 
   const handleDescargar = () => {
     setDescargando(true);
@@ -27,9 +31,12 @@ export function ComprasView() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Gestión de Compras</h1>
-        <p className="text-sm text-muted-foreground">Inventario actual y pedidos sugeridos</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Gestión de Compras</h1>
+          <p className="text-sm text-muted-foreground">Inventario actual y pedidos sugeridos</p>
+        </div>
+        {canUpload && <DocumentUploader />}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
