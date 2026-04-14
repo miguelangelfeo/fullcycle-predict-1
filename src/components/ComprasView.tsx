@@ -31,9 +31,12 @@ export function ComprasView() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Gestión de Compras</h1>
-        <p className="text-sm text-muted-foreground">Inventario actual y pedidos sugeridos</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Gestión de Compras</h1>
+          <p className="text-sm text-muted-foreground">Inventario actual y pedidos sugeridos</p>
+        </div>
+        {canUpload && <DocumentUploader />}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
