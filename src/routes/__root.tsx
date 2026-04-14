@@ -35,11 +35,13 @@ export const Route = createRootRoute({
       { title: "FullCycle Solutions — Gestión de Desperdicio Alimentario" },
       { name: "description", content: "Plataforma para reducir el desperdicio de alimentos en hoteles y cruceros. ODS 2: Hambre Cero." },
       { name: "author", content: "FullCycle Solutions" },
-      { property: "og:title", content: "FullCycle Solutions" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "FullCycle Solutions — Gestión de Desperdicio Alimentario" },
+      { property: "og:description", content: "Plataforma para reducir el desperdicio de alimentos en hoteles y cruceros. ODS 2: Hambre Cero." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "FullCycle Solutions — Gestión de Desperdicio Alimentario" },
+      { name: "twitter:description", content: "Plataforma para reducir el desperdicio de alimentos en hoteles y cruceros. ODS 2: Hambre Cero." },
     ],
     links: [
       {
