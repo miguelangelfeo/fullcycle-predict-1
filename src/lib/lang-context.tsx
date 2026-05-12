@@ -121,6 +121,21 @@ const translations = {
     errorLeer: "Error al leer el archivo.",
     masDe50: "⚠️ Más del 50% del inventario está en estado crítico",
     productosBajoMinimo: "producto(s) por debajo del stock mínimo",
+    // Estado de pedidos
+    pendiente: "Pendiente",
+    enviado: "Enviado",
+    recibido: "Recibido",
+    // Indicadores de datos
+    datosDemo: "Datos de ejemplo",
+    datosCargados: "Datos cargados",
+    // Registro de desperdicio
+    registrarDesperdicio: "Registrar Desperdicio",
+    cuantoSobro: "¿Cuánto sobró?",
+    registrar: "Registrar",
+    desperdicioRegistrado: "Desperdicio registrado",
+    registrosHoy: "Registros de hoy",
+    sinRegistros: "Sin registros aún",
+    cantidadKg: "Cantidad (kg)",
   },
   en: {
     // Sidebar
@@ -240,6 +255,21 @@ const translations = {
     errorLeer: "Error reading the file.",
     masDe50: "⚠️ More than 50% of inventory is in critical status",
     productosBajoMinimo: "product(s) below minimum stock",
+    // Estado de pedidos
+    pendiente: "Pending",
+    enviado: "Shipped",
+    recibido: "Received",
+    // Indicadores de datos
+    datosDemo: "Sample data",
+    datosCargados: "Loaded data",
+    // Registro de desperdicio
+    registrarDesperdicio: "Register Waste",
+    cuantoSobro: "How much was left over?",
+    registrar: "Register",
+    desperdicioRegistrado: "Waste registered",
+    registrosHoy: "Today's records",
+    sinRegistros: "No records yet",
+    cantidadKg: "Amount (kg)",
   },
 } as const;
 

@@ -1,6 +1,7 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth-context";
 import { LangProvider } from "@/lib/lang-context";
+import { InventarioProvider } from "@/lib/inventario-store";
 
 import appCss from "../styles.css?url";
 
@@ -58,7 +59,7 @@ export const Route = createRootRoute({
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <head>
         <HeadContent />
       </head>
@@ -74,7 +75,9 @@ function RootComponent() {
   return (
     <LangProvider>
       <AuthProvider>
-        <Outlet />
+        <InventarioProvider>
+          <Outlet />
+        </InventarioProvider>
       </AuthProvider>
     </LangProvider>
   );

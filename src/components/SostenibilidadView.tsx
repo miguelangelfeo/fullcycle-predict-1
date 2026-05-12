@@ -1,20 +1,40 @@
 import { motion } from "framer-motion";
-import { Leaf, TreePine, Car, Target, TrendingDown } from "lucide-react";
+import { Leaf, TreePine, Car, Target, TrendingDown, Database } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { StatCard } from "./StatCard";
 import { impactoAmbiental, impactoSemanal } from "@/lib/mock-data";
 import { useLang } from "@/lib/lang-context";
+import { useInventario } from "@/lib/inventario-store";
 
 export function SostenibilidadView() {
   const { t } = useLang();
-  const { comidaRescatada, co2Evitado, metanoEvitado, reduccionPorcentual, metaReduccion, equivalencias } = impactoAmbiental;
+  const { registrosDesperdicio } = useInventario();
+
+  // Si hay registros reales de desperdicio, calcular métricas reales
+  // Factor: 2.6 kg CO2 evitado por kg de comida rescatada (WRAP/FAO)
+  const CO2_FACTOR = 2.6;
+  const METANO_FACTOR = 0.15;
+  const totalDesperdicioReal = registrosDesperdicio.reduce((s, r) => s + r.cantidad, 0);
+  const tieneDataReal = registrosDesperdicio.length > 0;
+
+  const comidaRescatada = tieneDataReal ? totalDesperdicioReal : impactoAmbiental.comidaRescatada;
+  const co2Evitado = tieneDataReal ? Math.round(totalDesperdicioReal * CO2_FACTOR) : impactoAmbiental.co2Evitado;
+  const metanoEvitado = tieneDataReal ? Math.round(totalDesperdicioReal * METANO_FACTOR) : impactoAmbiental.metanoEvitado;
+
+  const { reduccionPorcentual, metaReduccion, equivalencias } = impactoAmbiental;
   const metaCumplida = reduccionPorcentual >= metaReduccion;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">{t.sostenibilidadTitle}</h1>
-        <p className="text-sm text-muted-foreground">{t.sostenibilidadSub}</p>
+        <div className="flex items-center gap-2 mt-0.5">
+          <p className="text-sm text-muted-foreground">{t.sostenibilidadSub}</p>
+          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${tieneDataReal ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>
+            <Database size={10} />
+            {tieneDataReal ? (t.datosCargados ?? "Datos cargados") : (t.datosDemo ?? "Datos de ejemplo")}
+          </span>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

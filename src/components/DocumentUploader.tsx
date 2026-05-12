@@ -5,6 +5,7 @@ import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 import Papa from "papaparse";
 import { useLang } from "@/lib/lang-context";
+import { useInventario, type ProductoInventario, type PedidoItem } from "@/lib/inventario-store";
 
 interface ParsedRow {
   sku: string;
@@ -67,6 +68,7 @@ function normalizeHeaders(headers: string[]): Record<string, string> {
 
 export function DocumentUploader() {
   const { t } = useLang();
+  const { setInventario } = useInventario();
   const [open, setOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -139,7 +141,26 @@ export function DocumentUploader() {
             return;
           }
 
-          setAnalysis(analyzeData(rows, t.productosBajoMinimo, t.masDe50));
+          const resultado = analyzeData(rows, t.productosBajoMinimo, t.masDe50);
+          setAnalysis(resultado);
+
+          // Persistir en el store global
+          const productos: ProductoInventario[] = rows.map((r) => ({
+            sku: r.sku,
+            nombre: r.nombre,
+            stock: r.stock,
+            minimo: r.minimo,
+            unidad: r.unidad,
+          }));
+          const pedido: PedidoItem[] = resultado.sugerencias.map((s) => ({
+            sku: s.sku,
+            nombre: s.nombre,
+            cantidadActual: s.cantidadActual,
+            cantidadPedir: s.cantidadPedir,
+            unidad: s.unidad,
+          }));
+          setInventario(productos, pedido);
+
           setParsing(false);
         } catch {
           setError(t.errorProcesar);

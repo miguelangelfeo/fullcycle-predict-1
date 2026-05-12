@@ -1,13 +1,15 @@
 import { motion } from "framer-motion";
-import { BarChart3, TrendingDown, DollarSign, Leaf } from "lucide-react";
+import { BarChart3, TrendingDown, DollarSign, Leaf, Database } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts";
 import { StatCard } from "./StatCard";
 import { consumoVsDesperdicioData, ahorroProyectadoData, statCardData, type PeriodKey } from "@/lib/mock-data";
 import { useState } from "react";
 import { useLang } from "@/lib/lang-context";
+import { useInventario } from "@/lib/inventario-store";
 
 export function DashboardView() {
   const { t } = useLang();
+  const { inventario, tieneDataReal } = useInventario();
   const FILTROS: { label: string; key: PeriodKey }[] = [
     { label: t.diario, key: "diario" },
     { label: t.semanal, key: "semanal" },
@@ -24,7 +26,13 @@ export function DashboardView() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">{t.dashboardTitle}</h1>
-          <p className="text-sm text-muted-foreground">{t.dashboardSub}</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <p className="text-sm text-muted-foreground">{t.dashboardSub}</p>
+            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${tieneDataReal ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>
+              <Database size={10} />
+              {tieneDataReal ? (t.datosCargados ?? "Datos cargados") : (t.datosDemo ?? "Datos de ejemplo")}
+            </span>
+          </div>
         </div>
         <div className="flex gap-1 rounded-lg bg-muted p-1">
           {FILTROS.map((f) => (

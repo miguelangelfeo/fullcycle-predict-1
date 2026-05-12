@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 
 export type UserRole = "gerente" | "cocina" | "compras" | "sostenibilidad";
 
@@ -14,6 +14,8 @@ interface AuthContextType {
   logout: () => void;
 }
 
+const STORAGE_KEY = "fc_user";
+
 const MOCK_USERS: Record<string, { password: string; name: string; role: UserRole }> = {
   "gerente@fullcycle.com": { password: "Gerente123!", name: "Miguel Ángel Feo", role: "gerente" },
   "cocina@fullcycle.com": { password: "Cocina123!", name: "Andres Sanchez", role: "cocina" },
@@ -21,21 +23,41 @@ const MOCK_USERS: Record<string, { password: string; name: string; role: UserRol
   "sostenibilidad@fullcycle.com": { password: "Sosten123!", name: "Juan Diego Martinez", role: "sostenibilidad" },
 };
 
+function loadUser(): User | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as User;
+  } catch {
+    return null;
+  }
+}
+
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+
+  // Hidratar sesión desde localStorage al montar
+  useEffect(() => {
+    setUser(loadUser());
+  }, []);
 
   const login = (email: string, password: string) => {
     const normalized = email.toLowerCase().trim();
     const mockUser = MOCK_USERS[normalized];
     if (!mockUser) return { success: false, error: "Usuario no encontrado" };
     if (mockUser.password !== password) return { success: false, error: "Contraseña incorrecta" };
-    setUser({ email: normalized, name: mockUser.name, role: mockUser.role });
+    const u: User = { email: normalized, name: mockUser.name, role: mockUser.role };
+    setUser(u);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(u)); } catch { /* noop */ }
     return { success: true };
   };
 
-  const logout = () => setUser(null);
+  const logout = () => {
+    setUser(null);
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* noop */ }
+  };
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
@@ -49,3 +71,4 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth must be inside AuthProvider");
   return ctx;
 }
+
