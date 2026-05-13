@@ -17,7 +17,16 @@ export interface PedidoItem {
   unidad: string;
 }
 
-export type EstadoPedido = "pendiente" | "enviado" | "recibido";
+export type EstadoPedido = "pendiente" | "enviado" | "recibido" | "pagado";
+
+export interface PagoInfo {
+  referencia: string;
+  monto: number;
+  metodoPago: "transferencia" | "cheque" | "efectivo" | "tarjeta";
+  proveedorNombre: string;
+  proveedorEmail: string;
+  fechaPago: string;
+}
 
 export interface RegistroDesperdicio {
   item: string;
@@ -34,6 +43,8 @@ interface InventarioState {
   ultimaActualizacion: string | null;
   /** Estado de cada pedido (por SKU) */
   estadosPedido: Record<string, EstadoPedido>;
+  /** Información de pago por SKU */
+  pagosPorSku: Record<string, PagoInfo>;
   /** Registros de desperdicio diario (producción/cocina) */
   registrosDesperdicio: RegistroDesperdicio[];
 }
@@ -42,6 +53,7 @@ interface InventarioContextType extends InventarioState {
   setInventario: (productos: ProductoInventario[], pedido: PedidoItem[]) => void;
   clearInventario: () => void;
   setEstadoPedido: (sku: string, estado: EstadoPedido) => void;
+  registrarPago: (sku: string, pago: PagoInfo) => void;
   agregarDesperdicio: (registro: RegistroDesperdicio) => void;
   tieneDataReal: boolean;
 }
@@ -54,6 +66,7 @@ const INITIAL_STATE: InventarioState = {
   pedidoSugerido: [],
   ultimaActualizacion: null,
   estadosPedido: {},
+  pagosPorSku: {},
   registrosDesperdicio: [],
 };
 
@@ -116,6 +129,14 @@ export function InventarioProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const registrarPago = (sku: string, pago: PagoInfo) => {
+    setState((prev) => ({
+      ...prev,
+      estadosPedido: { ...prev.estadosPedido, [sku]: "pagado" },
+      pagosPorSku: { ...prev.pagosPorSku, [sku]: pago },
+    }));
+  };
+
   const agregarDesperdicio = (registro: RegistroDesperdicio) => {
     setState((prev) => ({
       ...prev,
@@ -127,7 +148,7 @@ export function InventarioProvider({ children }: { children: ReactNode }) {
 
   return (
     <InventarioContext.Provider
-      value={{ ...state, setInventario, clearInventario, setEstadoPedido, agregarDesperdicio, tieneDataReal }}
+      value={{ ...state, setInventario, clearInventario, setEstadoPedido, registrarPago, agregarDesperdicio, tieneDataReal }}
     >
       {children}
     </InventarioContext.Provider>

@@ -133,3 +133,18 @@ export const contadorHuesped = {
   platosEquivalentes: 825,
   co2EvitadoSemana: 858,
 };
+
+export interface Proveedor {
+  id: string;
+  nombre: string;
+  email: string;
+  telefono: string;
+  skus: string[];
+}
+
+export const proveedores: Proveedor[] = [
+  { id: "PROV-001", nombre: "Distribuidora Carnes Colombia", email: "pagos@carnescolombia.com", telefono: "+57 1 234 5678", skus: ["INS-002"] },
+  { id: "PROV-002", nombre: "Verduras del Campo S.A.S", email: "ventas@verdurascampo.com.co", telefono: "+57 1 345 6789", skus: ["INS-003", "INS-004"] },
+  { id: "PROV-003", nombre: "Lácteos del Norte", email: "cuentas@lacteosnorte.com", telefono: "+57 1 456 7890", skus: ["INS-007"] },
+  { id: "PROV-004", nombre: "Abastos Generales Ltda.", email: "compras@abastosgenerales.com", telefono: "+57 1 567 8901", skus: ["INS-001", "INS-005", "INS-006", "INS-008"] },
+];

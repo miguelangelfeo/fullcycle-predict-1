@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cd \"c:\\\\UNI\\\\Microsoft VS Code\\\\fullcycle-predict\"; Get-ChildItem -Path .\\\\src -Force | ForEach-Object { if \\($_.PSIsContainer\\) { \"DIR: $\\($_.Name\\)\" } else { \"FILE: $\\($_.Name\\)\" } })",
+      "PowerShell(cd \"c:\\\\UNI\\\\Microsoft VS Code\\\\fullcycle-predict\"; Get-ChildItem -Path .\\\\Daily -Force 2>$null | ForEach-Object { $_.Name })",
+      "Bash(npx tsc *)",
+      "Bash(npm install *)"
+    ]
+  }
+}
