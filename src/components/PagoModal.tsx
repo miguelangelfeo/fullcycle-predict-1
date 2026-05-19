@@ -7,16 +7,19 @@ import {
   DialogTitle, DialogDescription,
 } from "./ui/dialog";
 import { useLang } from "@/lib/lang-context";
-import { useInventario, type PagoInfo } from "@/lib/inventario-store";
+import { useInventario, type PagoInfo, type ProductoInventario, type PedidoItem } from "@/lib/inventario-store";
 import { useTarjeta, type TarjetaGuardada, type MarcaTarjeta } from "@/lib/tarjeta-store";
 import { TarjetaSelector, AgregarTarjetaModal } from "./AgregarTarjetaModal";
-import { proveedores } from "@/lib/mock-data";
-import type { PedidoItem } from "@/lib/inventario-store";
+import { proveedores, preciosPorSku } from "@/lib/mock-data";
 
 interface PagoModalProps {
   item: PedidoItem;
   open: boolean;
   onClose: () => void;
+  /** Inventario base para modo demo (cuando no hay CSV cargado) */
+  inventarioBase?: ProductoInventario[];
+  /** Pedido base para modo demo */
+  pedidoBase?: PedidoItem[];
 }
 
 type Step = "tarjeta" | "form" | "preview" | "done";
@@ -43,7 +46,7 @@ function TarjetaChip({ tarjeta }: { tarjeta: TarjetaGuardada }) {
   );
 }
 
-export function PagoModal({ item, open, onClose }: PagoModalProps) {
+export function PagoModal({ item, open, onClose, inventarioBase, pedidoBase }: PagoModalProps) {
   const { t } = useLang();
   const { registrarPago } = useInventario();
   const { tarjetas, tarjetaPrincipal } = useTarjeta();
@@ -55,15 +58,15 @@ export function PagoModal({ item, open, onClose }: PagoModalProps) {
   };
 
   const [step, setStep]           = useState<Step>("tarjeta");
-  const [tarjetaId, setTarjetaId] = useState<string | null>(tarjetaPrincipal?.id ?? null);
+  // Guardamos el objeto completo para evitar race condition con el contexto
+  const [tarjetaSeleccionada, setTarjetaSeleccionada] = useState<TarjetaGuardada | null>(tarjetaPrincipal ?? null);
   const [mostrarAgregar, setMostrarAgregar] = useState(false);
-  const [monto, setMonto]         = useState("");
+  const precioUnitario = preciosPorSku[item.sku] ?? 10000;
+  const monto = precioUnitario * item.cantidadPedir;
   const [referencia, setReferencia] = useState(`ORD-${item.sku}-${Date.now().toString().slice(-6)}`);
   const [metodoPago, setMetodoPago] = useState<PagoInfo["metodoPago"]>("tarjeta");
-  const [errors, setErrors]       = useState<{ monto?: string; referencia?: string }>({});
+  const [errors, setErrors]       = useState<{ referencia?: string }>({});
   const [procesando, setProcesando] = useState(false);
-
-  const tarjetaSeleccionada = tarjetas.find((t) => t.id === tarjetaId) ?? null;
 
   const metodos: { value: PagoInfo["metodoPago"]; label: string }[] = [
     { value: "tarjeta",       label: t.tarjeta        ?? "Tarjeta de crédito" },
@@ -79,7 +82,6 @@ export function PagoModal({ item, open, onClose }: PagoModalProps) {
 
   const validate = () => {
     const e: typeof errors = {};
-    if (!monto || isNaN(Number(monto)) || Number(monto) <= 0) e.monto = t.montoObligatorio ?? "Ingresa el monto";
     if (!referencia.trim()) e.referencia = t.referenciaObligatoria ?? "Ingresa la referencia";
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -92,13 +94,13 @@ export function PagoModal({ item, open, onClose }: PagoModalProps) {
     setTimeout(() => {
       const pago: PagoInfo = {
         referencia: referencia.trim(),
-        monto: Number(monto),
+        monto,
         metodoPago,
         proveedorNombre: proveedor.nombre,
         proveedorEmail: proveedor.email,
         fechaPago: new Date().toISOString(),
       };
-      registrarPago(item.sku, pago);
+      registrarPago(item.sku, pago, item.cantidadPedir, inventarioBase, pedidoBase);
 
       toast.custom(() => (
         <div className="flex w-80 items-start gap-3 rounded-xl border bg-card p-4 shadow-lg">
@@ -116,7 +118,7 @@ export function PagoModal({ item, open, onClose }: PagoModalProps) {
               <p><span className="font-medium text-foreground">Para:</span> {proveedor.email}</p>
               <p><span className="font-medium text-foreground">Asunto:</span> Pago confirmado — {referencia}</p>
               <p className="border-t mt-1 pt-1">
-                Pago de <strong>${Number(monto).toLocaleString("es-CO")} COP</strong> procesado con
+                Pago de <strong>${monto.toLocaleString("es-CO")} COP</strong> procesado con
                 {" "}•••• {tarjetaSeleccionada?.ultimos4 ?? "****"}
               </p>
             </div>
@@ -133,6 +135,7 @@ export function PagoModal({ item, open, onClose }: PagoModalProps) {
   const handleClose = () => {
     if (!procesando) {
       setStep("tarjeta");
+      setTarjetaSeleccionada(tarjetaPrincipal ?? null);
       setErrors({});
       onClose();
     }
@@ -140,7 +143,7 @@ export function PagoModal({ item, open, onClose }: PagoModalProps) {
 
   // Cuando se guarda una nueva tarjeta, seleccionarla automáticamente
   const handleTarjetaGuardada = (tc: TarjetaGuardada) => {
-    setTarjetaId(tc.id);
+    setTarjetaSeleccionada(tc);  // objeto directo, sin depender del contexto
     setMostrarAgregar(false);
   };
 
@@ -183,8 +186,11 @@ export function PagoModal({ item, open, onClose }: PagoModalProps) {
               </div>
 
               <TarjetaSelector
-                seleccionada={tarjetaId}
-                onSeleccionar={setTarjetaId}
+                seleccionada={tarjetaSeleccionada?.id ?? null}
+                onSeleccionar={(id) => {
+                  const tc = tarjetas.find((t) => t.id === id) ?? null;
+                  setTarjetaSeleccionada(tc);
+                }}
                 onAgregar={() => setMostrarAgregar(true)}
               />
 
@@ -241,18 +247,9 @@ export function PagoModal({ item, open, onClose }: PagoModalProps) {
               {/* Monto */}
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">{t.montoTotal ?? "Monto total (COP)"}</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={monto}
-                    onChange={(e) => { setMonto(e.target.value); setErrors((p) => ({ ...p, monto: undefined })); }}
-                    className={`w-full rounded-md border pl-7 pr-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 ${errors.monto ? "border-destructive" : ""}`}
-                  />
+                <div className="rounded-md border px-3 py-2 text-sm bg-background text-foreground">
+                  ${monto.toLocaleString("es-CO")} COP
                 </div>
-                {errors.monto && <p className="text-xs text-destructive">{errors.monto}</p>}
               </div>
 
               {/* Método */}
@@ -321,7 +318,7 @@ export function PagoModal({ item, open, onClose }: PagoModalProps) {
                     <div className="flex justify-between"><span className="text-muted-foreground">Pagado con:</span><span className="font-medium">•••• {tarjetaSeleccionada?.ultimos4}</span></div>
                     <div className="flex justify-between border-t pt-1.5 mt-1">
                       <span className="font-semibold">Total:</span>
-                      <span className="font-bold text-primary">${Number(monto).toLocaleString("es-CO")} COP</span>
+                      <span className="font-bold text-primary">${monto.toLocaleString("es-CO")} COP</span>
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground border-t pt-3">

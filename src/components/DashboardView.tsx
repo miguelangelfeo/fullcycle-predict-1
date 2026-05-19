@@ -5,11 +5,12 @@ import { StatCard } from "./StatCard";
 import { consumoVsDesperdicioData, ahorroProyectadoData, statCardData, type PeriodKey } from "@/lib/mock-data";
 import { useState } from "react";
 import { useLang } from "@/lib/lang-context";
-import { useInventario } from "@/lib/inventario-store";
+import { useInventario, useInventarioSync } from "@/lib/inventario-store";
 
 export function DashboardView() {
   const { t } = useLang();
   const { inventario, tieneDataReal } = useInventario();
+  useInventarioSync(); // Auto-actualiza cuando Compras registra pagos
   const FILTROS: { label: string; key: PeriodKey }[] = [
     { label: t.diario, key: "diario" },
     { label: t.semanal, key: "semanal" },

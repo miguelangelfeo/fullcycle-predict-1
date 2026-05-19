@@ -35,6 +35,9 @@ export interface RegistroDesperdicio {
   estado?: "registrado" | "donado";
 }
 
+/** SKUs que acaban de ser pagados/adquiridos (para badge especial en inventario) */
+export type SkusRecienAdquiridos = Record<string, boolean>;
+
 interface InventarioState {
   /** Productos cargados del CSV */
   inventario: ProductoInventario[];
@@ -48,13 +51,21 @@ interface InventarioState {
   pagosPorSku: Record<string, PagoInfo>;
   /** Registros de desperdicio diario (producción/cocina) */
   registrosDesperdicio: RegistroDesperdicio[];
+  /** SKUs recién adquiridos tras un pago (se muestra badge especial en inventario) */
+  skusRecienAdquiridos: SkusRecienAdquiridos;
 }
 
 interface InventarioContextType extends InventarioState {
   setInventario: (productos: ProductoInventario[], pedido: PedidoItem[]) => void;
   clearInventario: () => void;
   setEstadoPedido: (sku: string, estado: EstadoPedido) => void;
-  registrarPago: (sku: string, pago: PagoInfo) => void;
+  registrarPago: (
+    sku: string,
+    pago: PagoInfo,
+    cantidadAdquirida?: number,
+    inventarioBase?: ProductoInventario[],
+    pedidoBase?: PedidoItem[],
+  ) => void;
   agregarDesperdicio: (registro: RegistroDesperdicio) => void;
   donarDesperdicioHoy: () => void;
   tieneDataReal: boolean;
@@ -70,6 +81,7 @@ const INITIAL_STATE: InventarioState = {
   estadosPedido: {},
   pagosPorSku: {},
   registrosDesperdicio: [],
+  skusRecienAdquiridos: {},
 };
 
 // ── Helpers de localStorage ────────────────────────────────────────────────────
@@ -92,6 +104,13 @@ function saveToStorage(state: InventarioState) {
   }
 }
 
+// ── Sistema de listeners para sincronización automática ──────────────────────
+const listeners = new Set<() => void>();
+
+function notifyListeners() {
+  listeners.forEach((fn) => fn());
+}
+
 // ── Context ────────────────────────────────────────────────────────────────────
 const InventarioContext = createContext<InventarioContextType | null>(null);
 
@@ -103,11 +122,12 @@ export function InventarioProvider({ children }: { children: ReactNode }) {
     setState(loadFromStorage());
   }, []);
 
-  // Persistir cada cambio (excepto la carga inicial)
+  // Persistir cada cambio (excepto la carga inicial) y notificar listeners
   useEffect(() => {
     if (state.ultimaActualizacion !== null || state.registrosDesperdicio.length > 0) {
       saveToStorage(state);
     }
+    notifyListeners();
   }, [state]);
 
   const setInventario = (productos: ProductoInventario[], pedido: PedidoItem[]) => {
@@ -131,12 +151,38 @@ export function InventarioProvider({ children }: { children: ReactNode }) {
     }));
   };
 
-  const registrarPago = (sku: string, pago: PagoInfo) => {
-    setState((prev) => ({
-      ...prev,
-      estadosPedido: { ...prev.estadosPedido, [sku]: "pagado" },
-      pagosPorSku: { ...prev.pagosPorSku, [sku]: pago },
-    }));
+  const registrarPago = (
+    sku: string,
+    pago: PagoInfo,
+    cantidadAdquirida?: number,
+    inventarioBase?: ProductoInventario[],
+    pedidoBase?: PedidoItem[],
+  ) => {
+    setState((prev) => {
+      // En modo demo, si el inventario del store está vacío, sembramos el base
+      const invActual = prev.inventario.length > 0 ? prev.inventario : (inventarioBase ?? []);
+      const pedActual = prev.pedidoSugerido.length > 0 ? prev.pedidoSugerido : (pedidoBase ?? []);
+
+      // Cantidad a añadir al stock
+      const cantidadPedida = cantidadAdquirida ??
+        pedActual.find((p) => p.sku === sku)?.cantidadPedir ?? 0;
+
+      // Actualizar stock del producto pagado
+      const inventarioActualizado = invActual.map((prod) => {
+        if (prod.sku !== sku) return prod;
+        return { ...prod, stock: prod.stock + cantidadPedida };
+      });
+
+      return {
+        ...prev,
+        inventario: inventarioActualizado,
+        pedidoSugerido: pedActual,
+        ultimaActualizacion: prev.ultimaActualizacion ?? new Date().toISOString(),
+        estadosPedido: { ...prev.estadosPedido, [sku]: "pagado" },
+        pagosPorSku: { ...prev.pagosPorSku, [sku]: pago },
+        skusRecienAdquiridos: { ...prev.skusRecienAdquiridos, [sku]: true },
+      };
+    });
   };
 
   const agregarDesperdicio = (registro: RegistroDesperdicio) => {
@@ -186,4 +232,31 @@ export function useInventario() {
   const ctx = useContext(InventarioContext);
   if (!ctx) throw new Error("useInventario debe estar dentro de InventarioProvider");
   return ctx;
+}
+
+/**
+ * Hook de sincronización automática para vistas que necesitan actualizarse
+ * cuando otras secciones (Compras, Produccion) hacen cambios al inventario.
+ * 
+ * Uso en Dashboard, SostenibilidadView, etc.:
+ * ```tsx
+ * const { inventario, registrosDesperdicio } = useInventario();
+ * useInventarioSync(); // se suscribe a cambios automáticamente
+ * ```
+ */
+export function useInventarioSync() {
+  const [, forceUpdate] = useState<number>(0);
+  
+  useEffect(() => {
+    // Crear un handler que fuerza re-render cuando el inventario cambia
+    const handler = () => {
+      forceUpdate((prev) => prev + 1);
+    };
+    
+    listeners.add(handler);
+    
+    return () => {
+      listeners.delete(handler);
+    };
+  }, []);
 }

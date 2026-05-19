@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import {
   ShoppingCart, AlertTriangle, Package, Download, Database,
   CreditCard, CheckCircle2, History, Mail, Building2, ChevronRight,
-  Clock, Send, Inbox,
+  Clock, Send, Inbox, Sparkles,
 } from "lucide-react";
 import { inventario as mockInventario, pedidoSugerido as mockPedido, proveedores } from "@/lib/mock-data";
 import { StatCard } from "./StatCard";
@@ -29,16 +29,19 @@ export function ComprasView() {
   const { t } = useLang();
   const {
     inventario: invReal, pedidoSugerido: pedidoReal,
-    tieneDataReal, estadosPedido, pagosPorSku, setEstadoPedido,
+    tieneDataReal, estadosPedido, pagosPorSku, skusRecienAdquiridos,
+    setEstadoPedido,
   } = useInventario();
   const [descargando, setDescargando] = useState(false);
   const [pagoItem, setPagoItem] = useState<PedidoItem | null>(null);
   const canUpload = user && ["gerente", "compras"].includes(user.role);
 
-  const inventario = tieneDataReal
+  // invReal tiene datos tanto si hay CSV cargado como si hubo un pago en modo demo
+  const hasStoreData = invReal.length > 0;
+  const inventario = hasStoreData
     ? invReal.map((p) => ({ ...p, estado: (p.stock < p.minimo ? "critico" : "ok") as "critico" | "ok" }))
     : mockInventario;
-  const pedido = tieneDataReal ? pedidoReal : mockPedido;
+  const pedido = hasStoreData ? pedidoReal : mockPedido;
   const criticos = inventario.filter((i) => i.estado === "critico").length;
 
   // Para demo sin datos reales: mostrar INS-002 como "recibido" si no hay estado guardado
@@ -135,11 +138,18 @@ export function ComprasView() {
               <span>{item.stock} {item.unidad}</span>
               <span className="text-muted-foreground">{item.minimo} {item.unidad}</span>
               <span>
-                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                  item.estado === "critico" ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"}`}>
-                  {item.estado === "critico" && <AlertTriangle size={12} />}
-                  {item.estado === "critico" ? t.critico : "OK"}
-                </span>
+                {skusRecienAdquiridos[item.sku] ? (
+                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                    <Sparkles size={11} />
+                    Recién adquirido
+                  </span>
+                ) : (
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                    item.estado === "critico" ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"}`}>
+                    {item.estado === "critico" && <AlertTriangle size={12} />}
+                    {item.estado === "critico" ? t.critico : "OK"}
+                  </span>
+                )}
               </span>
             </motion.div>
           ))}
@@ -341,7 +351,13 @@ export function ComprasView() {
       )}
 
       {pagoItem && (
-        <PagoModal item={pagoItem} open={!!pagoItem} onClose={() => setPagoItem(null)} />
+        <PagoModal
+          item={pagoItem}
+          open={!!pagoItem}
+          onClose={() => setPagoItem(null)}
+          inventarioBase={!tieneDataReal ? mockInventario : undefined}
+          pedidoBase={!tieneDataReal ? mockPedido : undefined}
+        />
       )}
     </div>
   );

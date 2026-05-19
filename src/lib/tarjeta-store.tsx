@@ -27,6 +27,13 @@ const STORAGE_KEY = "fc_tarjetas";
 
 const TarjetaContext = createContext<TarjetaContextType | null>(null);
 
+function generarId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "id-" + Array.from({ length: 16 }, () => Math.floor(Math.random() * 16).toString(16)).join("") + "-" + Date.now();
+}
+
 export function TarjetaProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<TarjetaState>({ tarjetas: [] });
 
@@ -44,7 +51,7 @@ export function TarjetaProvider({ children }: { children: ReactNode }) {
   }, [state]);
 
   const agregarTarjeta = (t: Omit<TarjetaGuardada, "id">): TarjetaGuardada => {
-    const nueva: TarjetaGuardada = { ...t, id: crypto.randomUUID() };
+    const nueva: TarjetaGuardada = { ...t, id: generarId() };
     setState((prev) => {
       const tarjetas = t.esPrincipal
         ? [...prev.tarjetas.map((c) => ({ ...c, esPrincipal: false })), nueva]
@@ -82,9 +89,9 @@ export function useTarjeta() {
 // ── Helpers de detección de marca ────────────────────────────────────────────
 export function detectarMarca(numero: string): MarcaTarjeta {
   const n = numero.replace(/\s/g, "");
-  if (/^4/.test(n)) return "visa";
-  if (/^5[1-5]/.test(n) || /^2[2-7]/.test(n)) return "mastercard";
-  if (/^3[47]/.test(n)) return "amex";
+  if (n.startsWith("4")) return "visa";
+  if (n.startsWith("5") || n.startsWith("2")) return "mastercard";
+  if (n.startsWith("3")) return "amex";
   return "otro";
 }
 

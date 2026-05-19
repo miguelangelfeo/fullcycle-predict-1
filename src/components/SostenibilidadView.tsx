@@ -4,11 +4,12 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { StatCard } from "./StatCard";
 import { impactoAmbiental, impactoSemanal } from "@/lib/mock-data";
 import { useLang } from "@/lib/lang-context";
-import { useInventario } from "@/lib/inventario-store";
+import { useInventario, useInventarioSync } from "@/lib/inventario-store";
 
 export function SostenibilidadView() {
   const { t } = useLang();
   const { registrosDesperdicio } = useInventario();
+  useInventarioSync(); // Auto-actualiza cuando Produccion registra desperdicio
 
   // Si hay registros reales de desperdicio, calcular métricas reales
   // Factor: 2.6 kg CO2 evitado por kg de comida rescatada (WRAP/FAO)

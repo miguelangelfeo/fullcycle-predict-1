@@ -38,7 +38,8 @@ function analyzeData(rows: ParsedRow[], productosBajoMinimo: string, masDe50: st
     sku: c.sku,
     nombre: c.nombre,
     cantidadActual: c.stock,
-    cantidadPedir: Math.ceil((c.minimo - c.stock) * 1.3),
+    // Cantidad exacta para llegar al mínimo: minimo - stock
+    cantidadPedir: Math.max(0, c.minimo - c.stock),
     unidad: c.unidad,
   }));
 

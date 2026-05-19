@@ -208,8 +208,8 @@ export function AgregarTarjetaModal({ open, onClose, onGuardada }: AgregarTarjet
   const [cvv, setCvv]         = useState("");
   const [showBack, setShowBack] = useState(false);
   const [esPrincipal, setEsPrincipal] = useState(tarjetas.length === 0);
-  const [errors, setErrors]   = useState<Record<string, string>>({});
   const [guardada, setGuardada] = useState(false);
+  const [errors, setErrors] = useState<{ numero?: string; titular?: string; expiry?: string; cvv?: string }>({});
 
   const marca = detectarMarca(numero);
   const maxLen = longitidMaxima(marca);
@@ -217,7 +217,6 @@ export function AgregarTarjetaModal({ open, onClose, onGuardada }: AgregarTarjet
   const handleNumero = (v: string) => {
     const m = detectarMarca(v);
     setNumero(formatearNumeroTarjeta(v, m));
-    setErrors((p) => ({ ...p, numero: "" }));
   };
 
   const handleExpiry = (v: string) => {
@@ -225,37 +224,14 @@ export function AgregarTarjetaModal({ open, onClose, onGuardada }: AgregarTarjet
     let fmt = solo;
     if (solo.length >= 3) fmt = solo.slice(0, 2) + "/" + solo.slice(2);
     setExpiry(fmt);
-    setErrors((p) => ({ ...p, expiry: "" }));
   };
 
   const handleCvv = (v: string) => {
     const max = marca === "amex" ? 4 : 3;
     setCvv(v.replace(/\D/g, "").slice(0, max));
-    setErrors((p) => ({ ...p, cvv: "" }));
-  };
-
-  const validar = () => {
-    const e: Record<string, string> = {};
-    const soloDigitos = numero.replace(/\s/g, "");
-    const minLen = marca === "amex" ? 15 : 16;
-    if (soloDigitos.length < minLen) e.numero = t.errorNumeroTarjeta ?? "Número de tarjeta inválido";
-    if (!titular.trim() || titular.trim().length < 3) e.titular = t.errorTitular ?? "Ingresa el nombre del titular";
-    const [mes, anio] = expiry.split("/");
-    const mesN = parseInt(mes ?? "0");
-    const anioN = parseInt("20" + (anio ?? "0"));
-    const hoy = new Date();
-    if (!mes || !anio || mesN < 1 || mesN > 12 || anioN < hoy.getFullYear() ||
-        (anioN === hoy.getFullYear() && mesN < hoy.getMonth() + 1)) {
-      e.expiry = t.errorExpiry ?? "Fecha de vencimiento inválida";
-    }
-    const cvvMin = marca === "amex" ? 4 : 3;
-    if (cvv.length < cvvMin) e.cvv = t.errorCvv ?? "CVV inválido";
-    setErrors(e);
-    return Object.keys(e).length === 0;
   };
 
   const handleGuardar = () => {
-    if (!validar()) return;
     const soloDigitos = numero.replace(/\s/g, "");
     const [mes, anio] = expiry.split("/");
     const nueva = agregarTarjeta({
@@ -359,7 +335,7 @@ export function AgregarTarjetaModal({ open, onClose, onGuardada }: AgregarTarjet
                     type="text"
                     inputMode="numeric"
                     autoComplete="cc-exp"
-                    placeholder="MM/YY"
+                    placeholder="MM/AA"
                     value={expiry}
                     maxLength={5}
                     onChange={(e) => handleExpiry(e.target.value)}
@@ -404,7 +380,6 @@ export function AgregarTarjetaModal({ open, onClose, onGuardada }: AgregarTarjet
               <div className="flex justify-end gap-2 pt-1">
                 <Button variant="outline" size="sm" onClick={handleClose}>{t.cancelar ?? "Cancelar"}</Button>
                 <Button size="sm" onClick={handleGuardar} className="gap-1.5">
-                  <Lock size={13} />
                   {t.guardarTarjeta ?? "Guardar tarjeta"}
                 </Button>
               </div>

@@ -104,9 +104,10 @@ export const inventario = [
 ];
 
 export const pedidoSugerido = [
-  { sku: "INS-002", nombre: "Pechuga de pollo", cantidadActual: 45, cantidadPedir: 60, unidad: "kg" },
-  { sku: "INS-004", nombre: "Lechuga", cantidadActual: 8, cantidadPedir: 25, unidad: "kg" },
-  { sku: "INS-007", nombre: "Leche entera", cantidadActual: 15, cantidadPedir: 40, unidad: "L" },
+  // cantidadPedir = minimo - stock (lo que falta para llegar al mínimo)
+  { sku: "INS-002", nombre: "Pechuga de pollo", cantidadActual: 45, cantidadPedir: 15, unidad: "kg" },  // 60 - 45
+  { sku: "INS-004", nombre: "Lechuga",          cantidadActual: 8,  cantidadPedir: 7,  unidad: "kg" },  // 15 - 8
+  { sku: "INS-007", nombre: "Leche entera",     cantidadActual: 15, cantidadPedir: 15, unidad: "L"  },  // 30 - 15
 ];
 
 export const impactoAmbiental = {
@@ -148,3 +149,14 @@ export const proveedores: Proveedor[] = [
   { id: "PROV-003", nombre: "Lácteos del Norte", email: "cuentas@lacteosnorte.com", telefono: "+57 1 456 7890", skus: ["INS-007"] },
   { id: "PROV-004", nombre: "Abastos Generales Ltda.", email: "compras@abastosgenerales.com", telefono: "+57 1 567 8901", skus: ["INS-001", "INS-005", "INS-006", "INS-008"] },
 ];
+
+export const preciosPorSku: Record<string, number> = {
+  "INS-001": 3000,
+  "INS-002": 2200,
+  "INS-003": 1500,
+  "INS-004": 1200,
+  "INS-005": 45000,
+  "INS-006": 2400,
+  "INS-007": 3200,
+  "INS-008": 420,
+};
