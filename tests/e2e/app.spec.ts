@@ -4,16 +4,19 @@ test.describe('App Frontend', () => {
   test('debería cargar la página principal', async ({ page }) => {
     await page.goto('/');
     
-    // Asumiendo que hay un formulario de login o el dashboard al inicio.
-    // Esto dependerá de si el inicio de la app requiere auth.
-    // Verificamos que no haya un error 404
-    expect(await page.title()).not.toBe('');
-    
-    // Podemos buscar algún texto que sepamos que está en el inicio
-    // Por ejemplo, buscar el botón de Entrar si estamos en login
-    // const loginButton = page.getByRole('button', { name: /entrar/i });
-    // if (await loginButton.isVisible()) {
-    //   await expect(loginButton).toBeVisible();
-    // }
+    // 1. Verificar que estamos en la pantalla de login
+    await expect(page.getByRole('heading', { name: /Iniciar sesión/i })).toBeVisible();
+
+    // 2. Llenar credenciales (Usuario Gerente)
+    await page.getByLabel(/Correo electrónico/i).fill('gerente@fullcycle.com');
+    await page.getByLabel(/Contraseña/i).fill('Gerente123!');
+
+    // 3. Hacer clic en Ingresar
+    await page.getByRole('button', { name: /Ingresar/i }).click();
+
+    // 4. Verificar que redirigió al dashboard correctamente
+    // Buscamos un elemento del dashboard
+    await expect(page.getByText('Dashboard Analítico')).toBeVisible({ timeout: 10000 });
+    // También verificamos que la URL haya cambiado si es aplicable (aunque en un SPA puede que no cambie la ruta visiblemente, pero el DOM sí)
   });
 });
