@@ -32,6 +32,7 @@ export interface RegistroDesperdicio {
   item: string;
   cantidad: number;
   fecha: string; // ISO date
+  estado?: "registrado" | "donado";
 }
 
 interface InventarioState {
@@ -55,6 +56,7 @@ interface InventarioContextType extends InventarioState {
   setEstadoPedido: (sku: string, estado: EstadoPedido) => void;
   registrarPago: (sku: string, pago: PagoInfo) => void;
   agregarDesperdicio: (registro: RegistroDesperdicio) => void;
+  donarDesperdicioHoy: () => void;
   tieneDataReal: boolean;
 }
 
@@ -140,15 +142,40 @@ export function InventarioProvider({ children }: { children: ReactNode }) {
   const agregarDesperdicio = (registro: RegistroDesperdicio) => {
     setState((prev) => ({
       ...prev,
-      registrosDesperdicio: [...prev.registrosDesperdicio, registro],
+      registrosDesperdicio: [...prev.registrosDesperdicio, { ...registro, estado: "registrado" }],
     }));
+  };
+
+  const donarDesperdicioHoy = () => {
+    setState((prev) => {
+      const hoy = new Date().toISOString().slice(0, 10);
+      const actualizados = prev.registrosDesperdicio.map((r) => {
+        if (r.fecha === hoy) {
+          return { ...r, estado: "donado" as const };
+        }
+        return r;
+      });
+      return {
+        ...prev,
+        registrosDesperdicio: actualizados,
+      };
+    });
   };
 
   const tieneDataReal = state.inventario.length > 0;
 
   return (
     <InventarioContext.Provider
-      value={{ ...state, setInventario, clearInventario, setEstadoPedido, registrarPago, agregarDesperdicio, tieneDataReal }}
+      value={{
+        ...state,
+        setInventario,
+        clearInventario,
+        setEstadoPedido,
+        registrarPago,
+        agregarDesperdicio,
+        donarDesperdicioHoy,
+        tieneDataReal,
+      }}
     >
       {children}
     </InventarioContext.Provider>

@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { BarChart3, TrendingDown, DollarSign, Leaf, Database } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend, LabelList } from "recharts";
 import { StatCard } from "./StatCard";
 import { consumoVsDesperdicioData, ahorroProyectadoData, statCardData, type PeriodKey } from "@/lib/mock-data";
 import { useState } from "react";
@@ -59,32 +59,63 @@ export function DashboardView() {
       <div className="grid gap-6 lg:grid-cols-2">
         <motion.div key={`bar-${periodoKey}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border bg-card p-5">
           <h3 className="mb-4 text-sm font-semibold">{t.consumoVsDesperdicio}</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={barData} barGap={2}>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={barData} barGap={2} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-              <XAxis dataKey="turno" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 11 }} />
+              <XAxis 
+                dataKey="turno" 
+                tick={{ fontSize: 10 }} 
+                label={{ value: t.periodo ?? "Periodo", position: 'insideBottom', offset: -5, fontSize: 12, fill: "currentColor" }} 
+              />
+              <YAxis 
+                tick={{ fontSize: 11 }} 
+                label={{ value: "Cantidad (kg)", angle: -90, position: 'insideLeft', offset: -5, fontSize: 12, fill: "currentColor" }} 
+              />
               <Tooltip />
-              <Legend />
-              <Bar dataKey="consumo" fill="var(--color-chart-1)" radius={[4, 4, 0, 0]} name="Consumo" />
-              <Bar dataKey="desperdicio" fill="var(--color-chart-3)" radius={[4, 4, 0, 0]} name="Desperdicio" />
-              <Bar dataKey="meta" fill="var(--color-chart-2)" radius={[4, 4, 0, 0]} name="Meta" />
+              <Legend verticalAlign="bottom" height={36} wrapperStyle={{ bottom: 0 }} />
+              <Bar dataKey="consumo" fill="var(--color-chart-1)" radius={[4, 4, 0, 0]} name="Consumo">
+                <LabelList dataKey="consumo" position="top" offset={6} fontSize={8} fill="currentColor" opacity={0.8} />
+              </Bar>
+              <Bar dataKey="desperdicio" fill="var(--color-chart-3)" radius={[4, 4, 0, 0]} name="Desperdicio">
+                <LabelList dataKey="desperdicio" position="top" offset={6} fontSize={8} fill="currentColor" opacity={0.8} />
+              </Bar>
+              <Bar dataKey="meta" fill="var(--color-chart-2)" radius={[4, 4, 0, 0]} name="Meta">
+                <LabelList dataKey="meta" position="top" offset={6} fontSize={8} fill="currentColor" opacity={0.8} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
 
         <motion.div key={`line-${periodoKey}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-xl border bg-card p-5">
           <h3 className="mb-4 text-sm font-semibold">{t.proyeccionAhorro}</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={lineData}>
+          <ResponsiveContainer width="100%" height={320}>
+            <LineChart data={lineData} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-              <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
-              <YAxis yAxisId="left" tick={{ fontSize: 11 }} />
-              <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
+              <XAxis 
+                dataKey="mes" 
+                tick={{ fontSize: 11 }} 
+                padding={{ left: 20, right: 20 }}
+                label={{ value: t.tiempo ?? "Tiempo", position: 'insideBottom', offset: -5, fontSize: 12, fill: "currentColor" }} 
+              />
+              <YAxis 
+                yAxisId="left" 
+                tick={{ fontSize: 11 }} 
+                label={{ value: "Ahorro ($)", angle: -90, position: 'insideLeft', offset: -5, fontSize: 12, fill: "currentColor" }} 
+              />
+              <YAxis 
+                yAxisId="right" 
+                orientation="right" 
+                tick={{ fontSize: 11 }} 
+                label={{ value: "Desperdicio (kg)", angle: 90, position: 'insideRight', offset: -5, fontSize: 12, fill: "currentColor" }} 
+              />
               <Tooltip />
-              <Legend />
-              <Line yAxisId="left" type="monotone" dataKey="ahorro" stroke="var(--color-chart-1)" strokeWidth={2} name="Ahorro ($)" dot={{ r: 4 }} />
-              <Line yAxisId="right" type="monotone" dataKey="desperdicioKg" stroke="var(--color-chart-3)" strokeWidth={2} name="Desperdicio (kg)" dot={{ r: 4 }} />
+              <Legend verticalAlign="bottom" height={36} wrapperStyle={{ bottom: 0 }} />
+              <Line yAxisId="left" type="monotone" dataKey="ahorro" stroke="var(--color-chart-1)" strokeWidth={2} name="Ahorro ($)" dot={{ r: 4 }}>
+                <LabelList dataKey="ahorro" position="bottom" offset={10} fontSize={8} fill="currentColor" opacity={0.8} formatter={(v: any) => `$${v}`} />
+              </Line>
+              <Line yAxisId="right" type="monotone" dataKey="desperdicioKg" stroke="var(--color-chart-3)" strokeWidth={2} name="Desperdicio (kg)" dot={{ r: 4 }}>
+                <LabelList dataKey="desperdicioKg" position="top" offset={10} fontSize={8} fill="currentColor" opacity={0.8} formatter={(v: any) => `${v} kg`} />
+              </Line>
             </LineChart>
           </ResponsiveContainer>
         </motion.div>

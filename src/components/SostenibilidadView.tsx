@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Leaf, TreePine, Car, Target, TrendingDown, Database } from "lucide-react";
+import { Leaf, TreePine, Car, Target, TrendingDown, Database, Info } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { StatCard } from "./StatCard";
 import { impactoAmbiental, impactoSemanal } from "@/lib/mock-data";
@@ -35,16 +35,33 @@ export function SostenibilidadView() {
             {tieneDataReal ? (t.datosCargados ?? "Datos cargados") : (t.datosDemo ?? "Datos de ejemplo")}
           </span>
         </div>
+        
+        {/* Leyenda de colores */}
+        <div className="mt-4 flex flex-wrap items-center gap-4 text-xs">
+          <span className="font-semibold text-muted-foreground">{t.leyendaColores}:</span>
+          <div className="flex items-center gap-1.5 text-success">
+            <div className="h-2 w-2 rounded-full bg-success"></div>
+            {t.leyendaVerde}
+          </div>
+          <div className="flex items-center gap-1.5 text-warning">
+            <div className="h-2 w-2 rounded-full bg-warning"></div>
+            {t.leyendaAmarillo}
+          </div>
+          <div className="flex items-center gap-1.5 text-destructive">
+            <div className="h-2 w-2 rounded-full bg-destructive"></div>
+            {t.leyendaRojo}
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard title={t.comidaRescatada} value={`${comidaRescatada} kg`} icon={<Leaf size={20} />} variant="success" />
-        <StatCard title={t.co2Evitado} value={`${co2Evitado} kg`} icon={<TreePine size={20} />} />
+        <StatCard title={t.co2Evitado} value={`${co2Evitado} kg`} icon={<TreePine size={20} />} tooltip={t.co2Tooltip} />
         <StatCard title={t.metanoEvitado} value={`${metanoEvitado} kg`} icon={<TrendingDown size={20} />} />
         <StatCard
           title={t.metaReduccion}
           value={`${reduccionPorcentual}%`}
-          subtitle={`${t.meta}: ${metaReduccion}%`}
+          subtitle={`${t.meta}: ${metaReduccion}% — ${metaCumplida ? t.cumpliendoMeta : t.noCumpliendoMeta}`}
           icon={<Target size={20} />}
           variant={metaCumplida ? "success" : "warning"}
         />
@@ -91,14 +108,24 @@ export function SostenibilidadView() {
                 <TreePine size={24} className="text-success" />
                 <div>
                   <p className="text-lg font-bold">{equivalencias.arboles}</p>
-                  <p className="text-xs text-muted-foreground">{t.arboles}</p>
+                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                    {t.arboles}
+                    <span title={t.arbolesTooltip} className="inline-flex items-center cursor-help">
+                      <Info size={12} />
+                    </span>
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3 rounded-lg bg-primary/5 p-3">
                 <Car size={24} className="text-primary" />
                 <div>
                   <p className="text-lg font-bold">{equivalencias.viajesAuto.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">{t.kmAuto}</p>
+                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                    {t.kmAuto}
+                    <span title={t.autoTooltip} className="inline-flex items-center cursor-help">
+                      <Info size={12} />
+                    </span>
+                  </p>
                 </div>
               </div>
             </div>

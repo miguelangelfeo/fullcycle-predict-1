@@ -1,9 +1,10 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, FileSpreadsheet, AlertTriangle, CheckCircle, X, TrendingDown, TrendingUp, BarChart3 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 import Papa from "papaparse";
+import * as XLSX from "xlsx";
 import { useLang } from "@/lib/lang-context";
 import { useInventario, type ProductoInventario, type PedidoItem } from "@/lib/inventario-store";
 
@@ -69,6 +70,7 @@ function normalizeHeaders(headers: string[]): Record<string, string> {
 export function DocumentUploader() {
   const { t } = useLang();
   const { setInventario } = useInventario();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -89,89 +91,114 @@ export function DocumentUploader() {
     setParsing(true);
 
     const ext = f.name.split(".").pop()?.toLowerCase();
-    if (!["csv", "txt"].includes(ext || "")) {
+    const isExcel = ["xlsx", "xls"].includes(ext || "");
+    const isCsvOrTxt = ["csv", "txt"].includes(ext || "");
+
+    if (!isExcel && !isCsvOrTxt) {
       setError(t.formatoNoSoportado);
       setParsing(false);
       return;
     }
 
-    Papa.parse(f, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        try {
-          if (!results.data || results.data.length === 0) {
-            setError(t.archivoVacio);
-            setParsing(false);
-            return;
-          }
-
-          const headers = Object.keys(results.data[0] as Record<string, unknown>);
-          const headerMap = normalizeHeaders(headers);
-
-          if (!headerMap[headers.find((h) => normalizeHeaders([h])[h] === "sku") || ""] &&
-              !Object.values(headerMap).includes("sku")) {
-            setError(t.sinColumnasSKU);
-            setParsing(false);
-            return;
-          }
-
-          const rows: ParsedRow[] = [];
-          for (const raw of results.data as Record<string, string>[]) {
-            const mapped: Record<string, string> = {};
-            for (const [origHeader, value] of Object.entries(raw)) {
-              const key = headerMap[origHeader];
-              if (key) mapped[key] = value;
+    const parseData = (input: File | string) => {
+      Papa.parse(input as any, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          try {
+            if (!results.data || results.data.length === 0) {
+              setError(t.archivoVacio);
+              setParsing(false);
+              return;
             }
 
-            if (mapped.sku && mapped.nombre) {
-              rows.push({
-                sku: mapped.sku.trim(),
-                nombre: mapped.nombre.trim(),
-                stock: parseFloat(mapped.stock) || 0,
-                minimo: parseFloat(mapped.minimo) || 0,
-                unidad: mapped.unidad?.trim() || "und",
-              });
+            const headers = Object.keys(results.data[0] as Record<string, unknown>);
+            const headerMap = normalizeHeaders(headers);
+
+            if (!headerMap[headers.find((h) => normalizeHeaders([h])[h] === "sku") || ""] &&
+                !Object.values(headerMap).includes("sku")) {
+              setError(t.sinColumnasSKU);
+              setParsing(false);
+              return;
             }
-          }
 
-          if (rows.length === 0) {
-            setError(t.sinDatosValidos);
+            const rows: ParsedRow[] = [];
+            for (const raw of results.data as Record<string, string>[]) {
+              const mapped: Record<string, string> = {};
+              for (const [origHeader, value] of Object.entries(raw)) {
+                const key = headerMap[origHeader];
+                if (key) mapped[key] = value;
+              }
+
+              if (mapped.sku && mapped.nombre) {
+                rows.push({
+                  sku: mapped.sku.trim(),
+                  nombre: mapped.nombre.trim(),
+                  stock: parseFloat(mapped.stock) || 0,
+                  minimo: parseFloat(mapped.minimo) || 0,
+                  unidad: mapped.unidad?.trim() || "und",
+                });
+              }
+            }
+
+            if (rows.length === 0) {
+              setError(t.sinDatosValidos);
+              setParsing(false);
+              return;
+            }
+
+            const resultado = analyzeData(rows, t.productosBajoMinimo, t.masDe50);
+            setAnalysis(resultado);
+
+            // Persistir en el store global
+            const productos: ProductoInventario[] = rows.map((r) => ({
+              sku: r.sku,
+              nombre: r.nombre,
+              stock: r.stock,
+              minimo: r.minimo,
+              unidad: r.unidad,
+            }));
+            const pedido: PedidoItem[] = resultado.sugerencias.map((s) => ({
+              sku: s.sku,
+              nombre: s.nombre,
+              cantidadActual: s.cantidadActual,
+              cantidadPedir: s.cantidadPedir,
+              unidad: s.unidad,
+            }));
+            setInventario(productos, pedido);
+
             setParsing(false);
-            return;
+          } catch {
+            setError(t.errorProcesar);
+            setParsing(false);
           }
-
-          const resultado = analyzeData(rows, t.productosBajoMinimo, t.masDe50);
-          setAnalysis(resultado);
-
-          // Persistir en el store global
-          const productos: ProductoInventario[] = rows.map((r) => ({
-            sku: r.sku,
-            nombre: r.nombre,
-            stock: r.stock,
-            minimo: r.minimo,
-            unidad: r.unidad,
-          }));
-          const pedido: PedidoItem[] = resultado.sugerencias.map((s) => ({
-            sku: s.sku,
-            nombre: s.nombre,
-            cantidadActual: s.cantidadActual,
-            cantidadPedir: s.cantidadPedir,
-            unidad: s.unidad,
-          }));
-          setInventario(productos, pedido);
-
+        },
+        error: () => {
+          setError(t.errorLeer);
           setParsing(false);
+        },
+      });
+    };
+
+    if (isExcel) {
+      f.arrayBuffer().then((buffer) => {
+        try {
+          const workbook = XLSX.read(buffer, { type: "array" });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const csv = XLSX.utils.sheet_to_csv(worksheet);
+          parseData(csv);
         } catch {
           setError(t.errorProcesar);
           setParsing(false);
         }
-      },
-      error: () => {
+      }).catch(() => {
         setError(t.errorLeer);
         setParsing(false);
-      },
-    });
+      });
+    } else {
+      parseData(f);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t]);
 
@@ -190,6 +217,17 @@ export function DocumentUploader() {
     if (f) processFile(f);
   };
 
+  const descargarPlantilla = () => {
+    const data = [
+      { SKU: "INS-001", Nombre: "Ejemplo Producto", Stock: 10, Minimo: 20, Unidad: "kg" },
+      { SKU: "INS-002", Nombre: "Otro Producto", Stock: 50, Minimo: 15, Unidad: "und" },
+    ];
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Plantilla");
+    XLSX.writeFile(workbook, "plantilla_inventario.xlsx");
+  };
+
   return (
     <>
       <Button variant="outline" size="sm" onClick={() => { reset(); setOpen(true); }}>
@@ -201,7 +239,15 @@ export function DocumentUploader() {
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t.subirDocTitle}</DialogTitle>
-            <DialogDescription>{t.subirDocDesc}</DialogDescription>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <DialogDescription className="max-w-md">
+                {t.subirDocDesc}
+              </DialogDescription>
+              <Button variant="outline" size="sm" onClick={descargarPlantilla}>
+                <FileSpreadsheet size={14} className="mr-1" />
+                {t.descargarPlantilla ?? "Descargar Plantilla"}
+              </Button>
+            </div>
           </DialogHeader>
 
           {!analysis && (
@@ -209,7 +255,8 @@ export function DocumentUploader() {
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={handleDrop}
-              className={`relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 transition-colors ${
+              onClick={() => fileInputRef.current?.click()}
+              className={`relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 transition-colors cursor-pointer ${
                 dragOver ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-muted-foreground/50"
               }`}
             >
@@ -218,9 +265,10 @@ export function DocumentUploader() {
               <p className="text-xs text-muted-foreground">{t.haceClic}</p>
               <input
                 type="file"
-                accept=".csv,.txt"
+                ref={fileInputRef}
+                accept=".csv,.txt,.xlsx,.xls"
                 onChange={handleFileInput}
-                className="absolute inset-0 cursor-pointer opacity-0"
+                className="hidden"
               />
               {parsing && <p className="text-xs text-primary animate-pulse">{t.analizando}</p>}
             </div>

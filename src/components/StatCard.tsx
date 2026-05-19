@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Info } from "lucide-react";
 import type { ReactNode } from "react";
 
 interface StatCardProps {
@@ -8,9 +9,10 @@ interface StatCardProps {
   icon: ReactNode;
   trend?: { value: number; label: string };
   variant?: "default" | "success" | "warning";
+  tooltip?: string;
 }
 
-export function StatCard({ title, value, subtitle, icon, trend, variant = "default" }: StatCardProps) {
+export function StatCard({ title, value, subtitle, icon, trend, variant = "default", tooltip }: StatCardProps) {
   const variantStyles = {
     default: "bg-card border-border",
     success: "bg-success/5 border-success/20",
@@ -25,7 +27,14 @@ export function StatCard({ title, value, subtitle, icon, trend, variant = "defau
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            {tooltip && (
+              <div title={tooltip} className="cursor-help text-muted-foreground hover:text-foreground">
+                <Info size={14} />
+              </div>
+            )}
+          </div>
           <p className="mt-1 text-2xl font-bold text-card-foreground">{value}</p>
           {subtitle && <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>}
           {trend && (

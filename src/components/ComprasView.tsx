@@ -165,7 +165,7 @@ export function ComprasView() {
               <motion.div key={item.sku} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}
                 className="grid grid-cols-6 gap-2 border-b px-5 py-2.5 text-sm last:border-0 items-center">
                 <span className="font-mono text-xs text-muted-foreground">{item.sku}</span>
-                <span className="font-medium truncate">{item.nombre}</span>
+                <span className="font-medium">{item.nombre}</span>
                 <span className="text-destructive">{item.cantidadActual}</span>
                 <span className="font-semibold text-primary">{item.cantidadPedir}</span>
                 <span className="text-muted-foreground">{item.unidad}</span>
