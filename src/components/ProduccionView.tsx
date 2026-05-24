@@ -4,7 +4,7 @@ import { produccionRecomendada, bancosAlimentos, BancoAlimentos } from "@/lib/mo
 import { StatCard } from "./StatCard";
 import { useState } from "react";
 import { useLang } from "@/lib/lang-context";
-import { useInventario } from "@/lib/inventario-store";
+import { useInventario, type RegistroDesperdicio } from "@/lib/inventario-store";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog";
 
 export function ProduccionView() {
@@ -27,6 +27,12 @@ export function ProduccionView() {
 
   const hoy = new Date().toISOString().slice(0, 10);
   const registrosHoy = registrosDesperdicio.filter((r) => r.fecha === hoy);
+
+  const produccionSteps = [
+    { number: 1, title: t.produccionPaso1Title, description: t.produccionPaso1Desc },
+    { number: 2, title: t.produccionPaso2Title, description: t.produccionPaso2Desc },
+    { number: 3, title: t.produccionPaso3Title, description: t.produccionPaso3Desc },
+  ];
   const totalDesperdicioHoy = registrosHoy.reduce((s, r) => s + r.cantidad, 0);
 
   // Excedentes aún no donados hoy
@@ -192,6 +198,17 @@ export function ProduccionView() {
       <div>
         <h1 className="text-2xl font-bold">{t.produccionTitle}</h1>
         <p className="text-sm text-muted-foreground">{t.produccionSub}</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          {produccionSteps.map((step) => (
+            <div key={step.number} className="rounded-2xl border border-muted/80 bg-card p-4 text-sm shadow-sm">
+              <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                {step.number}
+              </div>
+              <p className="mt-3 font-semibold text-foreground">{step.title}</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{step.description}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
@@ -202,6 +219,9 @@ export function ProduccionView() {
       </div>
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border bg-card">
+        <div className="border-b px-5 py-3">
+          <p className="text-xs text-muted-foreground">{t.produccionTableHint}</p>
+        </div>
         <div className="grid grid-cols-8 gap-4 border-b px-5 py-3 text-xs font-semibold text-muted-foreground">
           <span className="col-span-2">{t.item}</span>
           <span>{t.actual}</span>
@@ -268,8 +288,6 @@ export function ProduccionView() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border bg-card">
           <div className="border-b px-5 py-4 flex items-center justify-between">
             <h3 className="text-sm font-semibold">{t.registrosHoy} ({registrosHoy.length})</h3>
-            
-            {/* Botón de Donar excedentes si hay registros sin donar */}
             {totalPendienteDonacion > 0 && (
               <button
                 onClick={handleDonarClick}
@@ -279,6 +297,9 @@ export function ProduccionView() {
                 Donar excedentes a Banco de Alimentos ({totalPendienteDonacion.toFixed(1)} kg)
               </button>
             )}
+          </div>
+          <div className="px-5 py-3 text-xs text-muted-foreground border-b">
+            {t.produccionRegistrosHint}
           </div>
           <div className="grid grid-cols-3 gap-4 border-b px-5 py-2 text-xs font-semibold text-muted-foreground">
             <span>{t.item}</span>
@@ -353,9 +374,16 @@ export function ProduccionView() {
           {!donarSuccess ? (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2 text-foreground">
-                  <Heart className="text-primary fill-current" size={20} />
-                  Donar Excedentes Alimentarios
+                <DialogTitle className="flex flex-col gap-2 text-foreground">
+                  <div className="flex items-center gap-2">
+                    <Heart className="text-primary fill-current" size={20} />
+                    Donar Excedentes Alimentarios
+                  </div>
+                  {pendingQueue.length > 1 && registroSeleccionado ? (
+                    <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                      Paso {pendingIndex + 1} de {pendingQueue.length}
+                    </span>
+                  ) : null}
                 </DialogTitle>
                 <DialogDescription className="pt-3 space-y-4">
                   {registroSeleccionado ? (

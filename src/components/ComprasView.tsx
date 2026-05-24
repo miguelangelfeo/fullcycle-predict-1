@@ -36,6 +36,11 @@ export function ComprasView() {
   const [pagoItem, setPagoItem] = useState<PedidoItem | null>(null);
   // invReal tiene datos tanto si hay CSV cargado como si hubo un pago en modo demo
   const hasStoreData = invReal.length > 0;
+  const comprasSteps = [
+    { number: 1, title: t.comprasPaso1Title, description: t.comprasPaso1Desc },
+    { number: 2, title: t.comprasPaso2Title, description: t.comprasPaso2Desc },
+    { number: 3, title: t.comprasPaso3Title, description: t.comprasPaso3Desc },
+  ];
   const inventario = hasStoreData
     ? invReal.map((p) => ({ ...p, estado: estadoInventario(p.stock, p.minimo) }))
     : mockInventario;
@@ -91,7 +96,7 @@ export function ComprasView() {
   return (
     <div className="space-y-6">
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold">{t.comprasTitle}</h1>
           <div className="flex items-center gap-2 mt-0.5">
@@ -100,6 +105,18 @@ export function ComprasView() {
               <Database size={10} />
               {tieneDataReal ? (t.datosCargados ?? "Datos cargados") : (t.datosDemo ?? "Datos de ejemplo")}
             </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            {comprasSteps.map((step) => (
+              <div key={step.number} className="rounded-2xl border border-muted/80 bg-card p-4 text-sm shadow-sm">
+                <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                  {step.number}
+                </div>
+                <p className="mt-3 font-semibold text-foreground">{step.title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{step.description}</p>
+              </div>
+            ))}
           </div>
         </div>
         <DocumentUploader />
@@ -118,6 +135,9 @@ export function ComprasView() {
           icon={<CreditCard size={20} />}
           variant={pendientesPago > 0 ? "warning" : undefined}
         />
+      </div>
+      <div className="rounded-2xl border border-muted/80 bg-muted/50 p-4 text-sm text-muted-foreground">
+        {t.comprasHint}
       </div>
 
       {/* ── Inventario + Pedido sugerido ───────────────────────────────── */}

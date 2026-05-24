@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Info } from "lucide-react";
 import type { ReactNode } from "react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface StatCardProps {
   title: string;
@@ -31,9 +32,14 @@ export function StatCard({ title, value, subtitle, icon, trend, variant = "defau
           <div className="flex items-center gap-1.5">
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
             {tooltip && (
-              <div title={tooltip} className="cursor-help text-muted-foreground hover:text-foreground">
-                <Info size={14} />
-              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="cursor-help text-muted-foreground hover:text-foreground">
+                    <Info size={14} />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top">{tooltip}</TooltipContent>
+              </Tooltip>
             )}
           </div>
           <p className="mt-1 text-2xl font-bold text-card-foreground">{value}</p>

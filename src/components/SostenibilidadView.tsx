@@ -4,9 +4,10 @@ import {
   Leaf, TreePine, Car, Target, TrendingDown, Database, Info,
   CheckCircle2, AlertTriangle, XCircle,
 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { StatCard } from "./StatCard";
 import { SostenibilidadUploadCard } from "./SostenibilidadUploadCard";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { impactoAmbiental, impactoSemanal } from "@/lib/mock-data";
 import { useLang } from "@/lib/lang-context";
 import { useSostenibilidad } from "@/lib/sostenibilidad-store";
@@ -105,27 +106,53 @@ export function SostenibilidadView() {
     destructive: "ring-destructive/50",
   };
 
+  const sostenibilidadSteps = [
+    { number: 1, title: t.sostenibilidadPaso1Title, description: t.sostenibilidadPaso1Desc },
+    { number: 2, title: t.sostenibilidadPaso2Title, description: t.sostenibilidadPaso2Desc },
+    { number: 3, title: t.sostenibilidadPaso3Title, description: t.sostenibilidadPaso3Desc },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">{t.sostenibilidadTitle}</h1>
-        <div className="flex items-center gap-2 mt-0.5">
-          <p className="text-sm text-muted-foreground">{t.sostenibilidadSub}</p>
-          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${tieneReporte ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>
-            <Database size={10} />
-            {tieneReporte ? (t.datosCargados ?? "Datos cargados") : (t.datosDemo ?? "Datos de ejemplo")}
-          </span>
-          <span className={cn(
-            "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
-            ESTADO_BADGE[estadoMeta].className,
-          )}>
-            {ESTADO_BADGE[estadoMeta].icon}
-            {t[ESTADO_BADGE[estadoMeta].labelKey]}
-          </span>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mt-0.5">
+          <div>
+            <p className="text-sm text-muted-foreground">{t.sostenibilidadSub}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${tieneReporte ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>
+              <Database size={10} />
+              {tieneReporte ? (t.datosCargados ?? "Datos cargados") : (t.datosDemo ?? "Datos de ejemplo")}
+            </span>
+            <span className={cn(
+              "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
+              ESTADO_BADGE[estadoMeta].className,
+            )}>
+              {ESTADO_BADGE[estadoMeta].icon}
+              {t[ESTADO_BADGE[estadoMeta].labelKey]}
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          {sostenibilidadSteps.map((step) => (
+            <div key={step.number} className="rounded-2xl border border-muted/80 bg-card p-4 text-sm shadow-sm">
+              <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                {step.number}
+              </div>
+              <p className="mt-3 font-semibold text-foreground">{step.title}</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{step.description}</p>
+            </div>
+          ))}
         </div>
       </div>
 
       <SostenibilidadUploadCard compact={tieneReporte} />
+
+      <div className="rounded-2xl border border-muted/80 bg-muted/50 p-4 text-sm text-muted-foreground">
+        {t.sostenibilidadHint}
+      </div>
 
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -190,11 +217,11 @@ export function SostenibilidadView() {
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
               <XAxis dataKey="semana" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} domain={[0, chartYMax]} allowDataOverflow={false} />
-              <Tooltip
-                formatter={(value: number, name: string) => [
-                  `${Number(value).toLocaleString("es-CO")} kg`,
-                  name === "rescatadoKg" ? t.rescatadoKg : name,
-                ]}
+              <RechartsTooltip
+                formatter={(value: any) => {
+                  const numericValue = typeof value === "number" ? value : Number(value ?? 0);
+                  return `${numericValue.toLocaleString("es-CO")} kg`;
+                }}
               />
               <Bar
                 dataKey="rescatadoKg"
@@ -246,7 +273,12 @@ export function SostenibilidadView() {
                   <p className={cn("text-lg font-bold", estiloCards.value)}>{equivalencias.arboles}</p>
                   <p className="flex items-center gap-1 text-xs text-muted-foreground">
                     {t.arboles}
-                    <span title={t.arbolesTooltip} className="inline-flex cursor-help"><Info size={12} /></span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex cursor-help text-muted-foreground hover:text-foreground"><Info size={12} /></span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">{t.arbolesTooltip}</TooltipContent>
+                    </Tooltip>
                   </p>
                 </div>
               </div>
@@ -256,7 +288,12 @@ export function SostenibilidadView() {
                   <p className={cn("text-lg font-bold", estiloCards.value)}>{equivalencias.viajesAuto.toLocaleString("es-CO")}</p>
                   <p className="flex items-center gap-1 text-xs text-muted-foreground">
                     {t.kmAuto}
-                    <span title={t.autoTooltip} className="inline-flex cursor-help"><Info size={12} /></span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex cursor-help text-muted-foreground hover:text-foreground"><Info size={12} /></span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">{t.autoTooltip}</TooltipContent>
+                    </Tooltip>
                   </p>
                 </div>
               </div>

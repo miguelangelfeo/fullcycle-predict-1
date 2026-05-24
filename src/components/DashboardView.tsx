@@ -22,9 +22,15 @@ export function DashboardView() {
   const barData = consumoVsDesperdicioData[periodoKey];
   const lineData = ahorroProyectadoData[periodoKey];
 
+  const dashboardSteps = [
+    { number: 1, title: t.dashboardPaso1Title, description: t.dashboardPaso1Desc },
+    { number: 2, title: t.dashboardPaso2Title, description: t.dashboardPaso2Desc },
+    { number: 3, title: t.dashboardPaso3Title, description: t.dashboardPaso3Desc },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold">{t.dashboardTitle}</h1>
           <div className="flex items-center gap-2 mt-0.5">
@@ -33,6 +39,18 @@ export function DashboardView() {
               <Database size={10} />
               {tieneDataReal ? (t.datosCargados ?? "Datos cargados") : (t.datosDemo ?? "Datos de ejemplo")}
             </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            {dashboardSteps.map((step) => (
+              <div key={step.number} className="rounded-2xl border border-muted/80 bg-card p-4 text-sm shadow-sm">
+                <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                  {step.number}
+                </div>
+                <p className="mt-3 font-semibold text-foreground">{step.title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{step.description}</p>
+              </div>
+            ))}
           </div>
         </div>
         <div className="flex gap-1 rounded-lg bg-muted p-1">
@@ -55,6 +73,9 @@ export function DashboardView() {
         <StatCard title={t.desperdicio} value={stats.desperdicio} subtitle={stats.desperdicioPct} icon={<TrendingDown size={20} />} trend={{ value: -8.5, label: t.reduccion }} variant="success" />
         <StatCard title={t.ahorroProyectado} value={stats.ahorro} subtitle={stats.ahorroSub} icon={<DollarSign size={20} />} trend={{ value: 17, label: t.vsAnteriorMes }} />
         <StatCard title={t.comidaRescatada} value={stats.rescatada} subtitle={t.acumuladoMes} icon={<Leaf size={20} />} variant="success" />
+      </div>
+      <div className="rounded-2xl border border-muted/80 bg-muted/50 p-4 text-sm text-muted-foreground">
+        {t.dashboardStatsHint}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
