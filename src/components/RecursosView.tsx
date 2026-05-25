@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { FileText, ExternalLink, FileSpreadsheet, Download, Eye } from "lucide-react";
 import { Button } from "./ui/button";
+import { useLang } from "@/lib/lang-context";
 
 interface Recurso {
   id: string;
@@ -9,33 +10,6 @@ interface Recurso {
   descripcion: string;
   url: string;
 }
-
-const PDFS: Recurso[] = [
-  {
-    id: "pdf1",
-    titulo: "Manual de Operaciones",
-    descripcion: "Guía completa de procedimientos para el manejo de desperdicios.",
-    url: "https://www.fao.org/3/i3347e/i3347e.pdf",
-  },
-  {
-    id: "pdf2",
-    titulo: "Reporte de Sostenibilidad",
-    descripcion: "Informe anual sobre indicadores ambientales y ODS 2.",
-    url: "https://sdgs.un.org/sites/default/files/2023-06/SDG%20Report%202023_0.pdf",
-  },
-];
-
-const LINK_EXTERNO = {
-  titulo: "Objetivo de Desarrollo Sostenible 2 - ONU",
-  descripcion: "Hambre Cero: información oficial sobre la meta global.",
-  url: "https://www.un.org/sustainabledevelopment/es/hunger/",
-};
-
-const EXCEL = {
-  titulo: "Plantilla de Inventario",
-  descripcion: "Archivo Excel con formato base para registrar productos.",
-  filename: "plantilla_inventario.csv",
-};
 
 function generarCSV(): string {
   const headers = ["SKU", "Nombre", "Stock", "Minimo", "Unidad"];
@@ -50,7 +24,35 @@ function generarCSV(): string {
 }
 
 export function RecursosView() {
+  const { t } = useLang();
   const [pdfActivo, setPdfActivo] = useState<Recurso | null>(null);
+
+  const PDFS: Recurso[] = [
+    {
+      id: "pdf1",
+      titulo: t.manualOperaciones,
+      descripcion: t.manualOperacionesDesc,
+      url: "https://www.fao.org/3/i3347e/i3347e.pdf",
+    },
+    {
+      id: "pdf2",
+      titulo: t.reporteSostenibilidadDoc,
+      descripcion: t.reporteSostenibilidadDocDesc,
+      url: "https://sdgs.un.org/sites/default/files/2023-06/SDG%20Report%202023_0.pdf",
+    },
+  ];
+
+  const LINK_EXTERNO = {
+    titulo: t.ods2Onu,
+    descripcion: t.ods2OnuDesc,
+    url: "https://www.un.org/sustainabledevelopment/es/hunger/",
+  };
+
+  const EXCEL = {
+    titulo: t.plantillaInventario,
+    descripcion: t.plantillaInventarioDesc,
+    filename: "plantilla_inventario.csv",
+  };
 
   const descargarExcel = () => {
     const blob = new Blob([generarCSV()], { type: "text/csv" });
@@ -65,16 +67,16 @@ export function RecursosView() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Recursos</h1>
+        <h1 className="text-2xl font-bold">{t.recursosTitle}</h1>
         <p className="text-sm text-muted-foreground">
-          Documentos, enlaces y plantillas de referencia.
+          {t.recursosSub}
         </p>
       </div>
 
       {/* PDFs */}
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-          Documentos PDF
+          {t.documentosPDF}
         </h2>
         <div className="grid gap-4 md:grid-cols-2">
           {PDFS.map((pdf, i) => (
@@ -97,12 +99,12 @@ export function RecursosView() {
               <div className="mt-4 flex gap-2">
                 <Button size="sm" variant="outline" onClick={() => setPdfActivo(pdf)}>
                   <Eye size={14} className="mr-1" />
-                  Ver
+                  {t.ver}
                 </Button>
                 <Button size="sm" variant="ghost" asChild>
                   <a href={pdf.url} target="_blank" rel="noopener noreferrer">
                     <Download size={14} className="mr-1" />
-                    Abrir
+                    {t.abrir}
                   </a>
                 </Button>
               </div>
@@ -114,7 +116,7 @@ export function RecursosView() {
       {/* Link externo */}
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-          Enlace externo
+          {t.enlaceExterno}
         </h2>
         <motion.a
           href={LINK_EXTERNO.url}
@@ -138,7 +140,7 @@ export function RecursosView() {
       {/* Excel */}
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-          Archivo Excel
+          {t.archivoExcel}
         </h2>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -154,7 +156,7 @@ export function RecursosView() {
           </div>
           <Button size="sm" onClick={descargarExcel}>
             <Download size={14} className="mr-1" />
-            Descargar
+            {t.descargar}
           </Button>
         </motion.div>
       </section>
@@ -172,7 +174,7 @@ export function RecursosView() {
             <div className="flex items-center justify-between border-b px-5 py-3">
               <h3 className="text-sm font-semibold">{pdfActivo.titulo}</h3>
               <Button size="sm" variant="ghost" onClick={() => setPdfActivo(null)}>
-                Cerrar
+                {t.cerrar}
               </Button>
             </div>
             <iframe
