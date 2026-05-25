@@ -98,7 +98,7 @@ export function SostenibilidadUploadCard({ compact = false }: SostenibilidadUplo
               "CSV o Excel (.xlsx) con el impacto semanal y el estado (ok, precaución, crítico)."}
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={downloadSostenibilidadPlantilla} className="shrink-0">
+        <Button variant="outline" size="sm" onClick={() => downloadSostenibilidadPlantilla()} className="shrink-0">
           <FileSpreadsheet size={14} className="mr-1" />
           {t.descargarPlantilla ?? "Descargar plantilla"}
         </Button>
