@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SostenibilidadRouteImport } from './routes/sostenibilidad'
+import { Route as RecursosRouteImport } from './routes/recursos'
 import { Route as ProduccionRouteImport } from './routes/produccion'
 import { Route as HuespedRouteImport } from './routes/huesped'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -19,6 +20,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const SostenibilidadRoute = SostenibilidadRouteImport.update({
   id: '/sostenibilidad',
   path: '/sostenibilidad',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecursosRoute = RecursosRouteImport.update({
+  id: '/recursos',
+  path: '/recursos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProduccionRoute = ProduccionRouteImport.update({
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/huesped': typeof HuespedRoute
   '/produccion': typeof ProduccionRoute
+  '/recursos': typeof RecursosRoute
   '/sostenibilidad': typeof SostenibilidadRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/huesped': typeof HuespedRoute
   '/produccion': typeof ProduccionRoute
+  '/recursos': typeof RecursosRoute
   '/sostenibilidad': typeof SostenibilidadRoute
 }
 export interface FileRoutesById {
@@ -70,6 +78,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/huesped': typeof HuespedRoute
   '/produccion': typeof ProduccionRoute
+  '/recursos': typeof RecursosRoute
   '/sostenibilidad': typeof SostenibilidadRoute
 }
 export interface FileRouteTypes {
@@ -80,6 +89,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/huesped'
     | '/produccion'
+    | '/recursos'
     | '/sostenibilidad'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -88,6 +98,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/huesped'
     | '/produccion'
+    | '/recursos'
     | '/sostenibilidad'
   id:
     | '__root__'
@@ -96,6 +107,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/huesped'
     | '/produccion'
+    | '/recursos'
     | '/sostenibilidad'
   fileRoutesById: FileRoutesById
 }
@@ -105,6 +117,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   HuespedRoute: typeof HuespedRoute
   ProduccionRoute: typeof ProduccionRoute
+  RecursosRoute: typeof RecursosRoute
   SostenibilidadRoute: typeof SostenibilidadRoute
 }
 
@@ -115,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/sostenibilidad'
       fullPath: '/sostenibilidad'
       preLoaderRoute: typeof SostenibilidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recursos': {
+      id: '/recursos'
+      path: '/recursos'
+      fullPath: '/recursos'
+      preLoaderRoute: typeof RecursosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/produccion': {
@@ -161,17 +181,9 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   HuespedRoute: HuespedRoute,
   ProduccionRoute: ProduccionRoute,
+  RecursosRoute: RecursosRoute,
   SostenibilidadRoute: SostenibilidadRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
