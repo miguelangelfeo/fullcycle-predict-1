@@ -9,7 +9,6 @@ import {
   Leaf,
   LogOut,
   Recycle,
-  FolderOpen,
 } from "lucide-react";
 import { Sheet, SheetContent } from "./ui/sheet";
 import { cn } from "@/lib/utils";
@@ -37,20 +36,16 @@ function SidebarPanel({ onNavigate, className }: SidebarPanelProps) {
       { to: "/produccion", label: t.produccion, icon: <ChefHat size={20} /> },
       { to: "/compras", label: t.compras, icon: <ShoppingCart size={20} /> },
       { to: "/sostenibilidad", label: t.sostenibilidad, icon: <Leaf size={20} /> },
-      { to: "/recursos", label: t.recursos, icon: <FolderOpen size={20} /> },
     ],
     cocina: [
       { to: "/produccion", label: t.produccion, icon: <ChefHat size={20} /> },
-      { to: "/recursos", label: t.recursos, icon: <FolderOpen size={20} /> },
     ],
     compras: [
       { to: "/compras", label: t.compras, icon: <ShoppingCart size={20} /> },
-      { to: "/recursos", label: t.recursos, icon: <FolderOpen size={20} /> },
     ],
     sostenibilidad: [
       { to: "/dashboard", label: t.dashboard, icon: <BarChart3 size={20} /> },
       { to: "/sostenibilidad", label: t.sostenibilidad, icon: <Leaf size={20} /> },
-      { to: "/recursos", label: t.recursos, icon: <FolderOpen size={20} /> },
     ],
   };
 
